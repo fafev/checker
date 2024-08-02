@@ -13,7 +13,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, WebDriverException
 import queue
 
-# Global variables for GUI elements and threading
 root = tk.Tk()
 status_label = None
 start_button = None
@@ -26,17 +25,13 @@ num_threads_entry = None
 tab_views = []
 update_queue = queue.Queue()
 
-# Track processed usernames across all threads
 processed_usernames = set()
 
-# Define a lock for thread safety
 lock = threading.Lock()
 
-# Define the log function
 def log(message, tab_index=None):
     update_queue.put((message, tab_index))
 
-# Function to extract info from profile
 def extract_info(driver):
     try:
         level_element = WebDriverWait(driver, 5).until(
@@ -56,7 +51,6 @@ def extract_info(driver):
         log(f"Error extracting info: {str(e)}", None)
         return None, None
 
-# Function to handle login and data extraction
 def login_and_extract(username, password):
     global processed_lines
     try:
@@ -114,7 +108,7 @@ def login_and_extract(username, password):
                         with open("success.txt", "a") as success_file:
                             success_file.write(f"Username: {username}, Level: {level}, Inventory Value: {inventory}\n")
                     
-                    update_success_tab()  # Refresh success tab with new data
+                    update_success_tab()
                     
                     export_sorted_data("inventory.txt", "Inventory Value", 2)
                     export_sorted_data("level.txt", "Level", 1)
@@ -133,7 +127,6 @@ def login_and_extract(username, password):
     finally:
         driver.quit()
 
-# Function to export sorted data
 def export_sorted_data(filename, sort_key, value_index):
     with lock:
         with open("success.txt", "r", errors='ignore') as file:
@@ -145,16 +138,13 @@ def export_sorted_data(filename, sort_key, value_index):
             for line in lines:
                 outfile.write(line)
 
-# Function to update success tab
 def update_success_tab():
     with lock:
-        tab_views[1].delete(1.0, tk.END)  # Clear the current content of the success tab
+        tab_views[1].delete(1.0, tk.END)
         
-        # Read and sort the success file based on Inventory Value
         try:
             with open("success.txt", "r", errors='ignore') as success_file:
                 lines = success_file.readlines()
-                # Sort lines based on the Inventory Value
                 lines.sort(key=lambda line: int(line.split(", ")[2].split(": ")[1].replace(",", "").replace("~", "")), reverse=True)
                 
                 for line in lines:
@@ -164,7 +154,6 @@ def update_success_tab():
         
         tab_views[1].yview(tk.END)
 
-# Function to run thread for processing combos
 def run_thread(combos):
     global processed_lines
     while combos:
@@ -199,7 +188,6 @@ def run_thread(combos):
         processed_lines += 1
         update_counter_label()
 
-# Function to start the script
 def start_script():
     global is_running, threads, processed_lines, num_threads
     if is_running:
@@ -235,20 +223,17 @@ def start_script():
     start_button.config(state=tk.DISABLED)
     stop_button.config(state=tk.NORMAL)
 
-# Function to stop the script
 def stop_script():
     global is_running
     is_running = False
     start_button.config(state=tk.NORMAL)
     stop_button.config(state=tk.DISABLED)
 
-# Function to update the counter label
 def update_counter_label():
     global processed_lines
     if counter_label:
         counter_label.config(text=f"Processed Lines: {processed_lines}")
 
-# Function to update GUI from the queue
 def update_gui_from_queue():
     while not update_queue.empty():
         message, tab_index = update_queue.get()
@@ -260,7 +245,7 @@ def update_gui_from_queue():
             tab_views[0].yview(tk.END)
     root.after(100, update_gui_from_queue)
 
-# GUI setup
+
 def setup_gui():
     global status_label, start_button, stop_button, num_threads_entry, counter_label, tab_views
 
@@ -276,7 +261,6 @@ def setup_gui():
     style.configure('TNotebook.Tab', background='#333333', foreground='black', padding=[10, 5])
     style.map('TNotebook.Tab', background=[('selected', '#007acc')], foreground=[('selected', 'black')])
 
-    # Frame for controls
     control_frame = ttk.Frame(root)
     control_frame.grid(row=0, column=0, padx=10, pady=10, sticky='ns')
     
@@ -299,7 +283,6 @@ def setup_gui():
     num_threads_entry.grid(row=5, column=0, pady=5)
     num_threads_entry.insert(0, "1")
 
-    # Notebook for tabs
     tab_control = ttk.Notebook(root)
     tab_control.grid(row=0, column=1, sticky='nsew', padx=10, pady=10)
 
